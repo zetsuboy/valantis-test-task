@@ -1,94 +1,96 @@
-import Image from "next/image";
+'use client';
+import { useEffect, useState } from "react";
 import styles from "./page.module.css";
+import { fetchItems } from "@/utils/apiFetchHandlers";
+import { fetchWithRetry } from "@/utils/fetchWithRetry";
 
 export default function Home() {
+  const [offset, setOffset] = useState(0);
+  const [items, setItems] = useState([]);
+  const [filters, setFilters] = useState({
+    product: undefined,
+    price: undefined,
+    brand: undefined
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetchWithRetry(() => fetchItems(offset, filters), 3)
+      .then(res => {
+        setItems(res);
+        setIsLoading(false);
+      })
+  }, [offset])
+
+  useEffect(() => {
+    if (Object.values(filters).every(x => x === undefined)) return;
+
+    const timeout = setTimeout(() => {
+      setIsLoading(true);
+      fetchWithRetry(() => fetchItems(offset, filters), 3)
+        .then(res => {
+          setItems(res);
+          setIsLoading(false);
+        })
+    }, 1000)
+
+    return () => clearTimeout(timeout);
+  }, [filters])
+
+  const handleButtonClick = (isForward) => {
+    if (isForward) {
+      setOffset(prev => prev + 1);
+    }
+    else {
+      setOffset(prev => prev - 1 >= 0 ? prev - 1 : 0);
+    }
+  }
+
+  const handleFilterInput = (value, title) => {
+    setOffset(0);
+    setFilters(prev => ({
+      ...prev,
+      [title]: value == '' ? null : (title === 'price' ? parseFloat(value) : value)
+    }))
+  }
+
   return (
     <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+      <fieldset>
+        <h2>Valantis Table Items (page #{offset + 1})</h2>
+        <input onInput={(e) => handleFilterInput(e.currentTarget.value, 'product')} type="text" placeholder="Введите название товара"/>
+        <input onInput={(e) => handleFilterInput(e.currentTarget.value, 'price')} type="number" placeholder="Введите цену товара"/>
+        <input onInput={(e) => handleFilterInput(e.currentTarget.value, 'brand')} type="text" placeholder="Введите бренд товара"/>
+      </fieldset>
+      <table border={1} style={{ backgroundColor: isLoading ? 'gray' : 'transparent'}}>
+        <thead>
+          <tr style={{ height: '36px' }}>
+            <th style={{ width: '35% '}}>Id</th>
+            <th style={{ width: '40% '}}>Title</th>
+            <th style={{ width: '10% '}}>Price</th>
+            <th style={{ width: '15% '}}>Brand</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map(item => 
+            <tr key={item.id}>
+              <td>{item.id}</td>
+              <td>{item.product}</td>
+              <td>{item.price}</td>
+              <td>{item.brand}</td>
+            </tr>  
+          )}
+        </tbody>
+      </table>
+      <div className={styles.paginator}>
+        <button disabled={isLoading || offset < 1} onClick={() => handleButtonClick(false)}>
+          <img style={{ opacity: (isLoading || offset < 1) ? 0.25 : 1}} src="/arrow_right_white.svg"/>  
+        </button>
+        <span>{offset + 1}</span>
+        <button disabled={isLoading || items.length < 47} onClick={() => handleButtonClick(true)}>
+          <img style={{ opacity: (isLoading || items.length < 47) ? 0.25 : 1}} src="/arrow_right_white.svg"/>  
+        </button>
       </div>
     </main>
   );

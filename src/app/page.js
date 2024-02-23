@@ -85,11 +85,11 @@ export default function Home() {
       </table>
       <div className={styles.paginator}>
         <button disabled={isLoading || offset < 1} onClick={() => handleButtonClick(false)}>
-          <img style={{ opacity: (isLoading || offset < 1) ? 0.25 : 1}} src="/arrow_right_white.svg"/>  
+          <img style={{ opacity: (isLoading || offset < 1) ? 0.25 : 1}} src="/valantis-test-task/arrow_right_white.svg"/>  
         </button>
         <span>{offset + 1}</span>
         <button disabled={isLoading || items.length < 47} onClick={() => handleButtonClick(true)}>
-          <img style={{ opacity: (isLoading || items.length < 47) ? 0.25 : 1}} src="/arrow_right_white.svg"/>  
+          <img style={{ opacity: (isLoading || items.length < 47) ? 0.25 : 1}} src="/valantis-test-task/arrow_right_white.svg"/>  
         </button>
       </div>
     </main>

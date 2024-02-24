@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import styles from "./page.module.css";
 import { fetchItems } from "@/utils/apiFetchHandlers";
 import { fetchWithRetry } from "@/utils/fetchWithRetry";
+import getItems from "@/actions/getItems";
 
 export default function Home() {
   const [offset, setOffset] = useState(0);
@@ -16,7 +17,7 @@ export default function Home() {
 
   useEffect(() => {
     setIsLoading(true);
-    fetchWithRetry(() => fetchItems(offset, filters), 3)
+    getItems(offset, filters)
       .then(res => {
         setItems(res);
         setIsLoading(false);
@@ -28,11 +29,11 @@ export default function Home() {
 
     const timeout = setTimeout(() => {
       setIsLoading(true);
-      fetchWithRetry(() => fetchItems(offset, filters), 3)
+      getItems(offset, filters)
         .then(res => {
           setItems(res);
           setIsLoading(false);
-        })
+      })
     }, 1000)
 
     return () => clearTimeout(timeout);

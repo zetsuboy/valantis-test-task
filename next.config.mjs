@@ -2,7 +2,7 @@
 const nextConfig = {
     reactStrictMode: false,
     output: 'export',
-    basePath: "/valantis-test-task",
+    basePath: process.env.NODE_ENV === 'production' ? "/valantis-test-task" : "",
     images: {
         unoptimized: true,
     },
